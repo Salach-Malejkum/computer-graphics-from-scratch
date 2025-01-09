@@ -9,7 +9,7 @@ Vector3D CanvasToViewport(float x, float y) {
     return viewport;
 }
 
-void IntersectRaySphere(Vector3D origin, Vector3D direction, Sphere sphere, float &t0, float &t1) {
+bool IntersectRaySphere(Vector3D origin, Vector3D direction, Sphere sphere, float &t0, float &t1) {
     int r = *sphere.radius;
     Vector3D oc = {origin.x - sphere.center->x, origin.y - sphere.center->y, origin.z - sphere.center->z};
 
@@ -21,33 +21,36 @@ void IntersectRaySphere(Vector3D origin, Vector3D direction, Sphere sphere, floa
     if (discriminant < 0) {
         t0 = INFINITY;
         t1 = INFINITY;
-        return;
+        return false;
     }
 
     t0 = (-b + sqrt(discriminant)) / (2 * a);
     t1 = (-b - sqrt(discriminant)) / (2 * a);
+    return true;
 }
 
-sf::Color TraceRay(std::vector<Sphere> spheres, Vector3D origin, Vector3D direction, float tMin, float tMax) {
+sf::Color TraceRay(const std::vector<Sphere>& spheres, Vector3D origin, Vector3D direction, float tMin, float tMax) {
     float closest_t = INFINITY;
-    Sphere* closest_sphere = NULL;
+    const Sphere* closest_sphere = nullptr;
 
-    for (Sphere sphere : spheres) {
+    for (const Sphere& sphere : spheres) {
         float t0, t1;
-        IntersectRaySphere(origin, direction, sphere, t0, t1);
-
-        if (t0 >= tMin && t0 <= tMax && t0 < closest_t) {
-            closest_t = t0;
-            *(closest_sphere) = sphere;
-        }
-        if (t1 >= tMin && t1 <= tMax && t1 < closest_t) {
-            closest_t = t1;
-            *(closest_sphere) = sphere;
+        
+        if (IntersectRaySphere(origin, direction, sphere, t0, t1))
+        {
+            if (t0 >= tMin && t0 <= tMax && t0 < closest_t) {
+                closest_t = t0;
+                closest_sphere = &sphere;
+            }
+            if (t1 >= tMin && t1 <= tMax && t1 < closest_t) {
+                closest_t = t1;
+                closest_sphere = &sphere;
+            }
         }
     }
 
     if (closest_sphere != NULL) {
-        return *(*closest_sphere).color;
+        return *closest_sphere->color;
     } else {
         return sf::Color::White;
     }
