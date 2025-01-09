@@ -1,6 +1,6 @@
 #include <vector>
 #include <math.h>
-#include "sphere.h"
+#include "src/sphere/sphere.h"
 
 const int C_WIDTH = 600, C_HEIGHT = 600, V_WIDTH = 1, V_HEIGHT = 1, d = 1;
 
