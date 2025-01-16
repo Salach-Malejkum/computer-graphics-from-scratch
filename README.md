@@ -4,7 +4,7 @@ I documented my learning through a [book](https://www.amazon.com/Computer-Graphi
 ## Chapter 1
 To build project I did use the below command, where in my `C:/` path I have SFML installed. The full code is in main.cpp and src/sphere folder.
 ```
-g++ -o main.exe main.cpp src/sphere/sphere.cpp -I include -I C:/SFML/include -L C:/SFML/lib -lsfml-graphics -lsfml-window -lsfml-system
+g++ -o main.exe main.cpp src/sphere/sphere.cpp src/light/light.cpp -I include -I C:/SFML/include -L C:/SFML/lib -lsfml-graphics -lsfml-window -lsfml-system
 ```
 The results of the implementation can be found on below picture
 ![RGB Circles](cg_intro.png "RGB Circles")
