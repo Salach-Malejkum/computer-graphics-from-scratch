@@ -7,4 +7,13 @@ To build project I did use the below command, where in my `C:/` path I have SFML
 g++ -o main.exe main.cpp src/sphere/sphere.cpp src/light/light.cpp -I include -I C:/SFML/include -L C:/SFML/lib -lsfml-graphics -lsfml-window -lsfml-system
 ```
 The results of the implementation can be found on below picture
-![RGB Circles](cg_intro.png "RGB Circles")
+![RGB Circles](images/cg_intro.png "RGB Circles")
+
+## Chapter 2
+The project evolved into more complex project with a the following build command:
+```
+g++ -o main.exe main.cpp src/sphere/sphere.cpp src/light/light.cpp -I include -I C:/SFML/include -L C:/SFML/lib -lsfml-graphics -lsfml-window -lsfml-syste
+```
+
+The results of light & reflection implementation are shown below
+![RGB Circles with reflections](images/cg_ch2.png "RGB Circles with reflections")
