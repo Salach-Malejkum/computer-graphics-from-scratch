@@ -2,14 +2,16 @@
 
 Sphere::Sphere() {
     center = std::make_unique<Vector3D>(Vector3D{0, 0, 0});
-    radius = std::make_unique<float>(0);;
+    radius = std::make_unique<float>(0);
     color = std::make_unique<sf::Color>(sf::Color::White);
+    specular = std::make_unique<float>(-1);
 }
 
-Sphere::Sphere(const Vector3D& center, float radius, const sf::Color& color) {
+Sphere::Sphere(const Vector3D& center, float radius, const sf::Color& color, float specular) {
     this->center = std::make_unique<Vector3D>(center);
     this->radius = std::make_unique<float>(radius);
     this->color = std::make_unique<sf::Color>(color);
+    this->specular = std::make_unique<float>(specular);
 }
 
 Sphere::~Sphere() {}
@@ -24,6 +26,9 @@ Sphere::Sphere(const Sphere& sphere) {
     if (sphere.color) {
         color = std::make_unique<sf::Color>(*sphere.color);  // Deep copy of color
     }
+    if (sphere.specular) {
+        specular = std::make_unique<float>(*sphere.specular);  // Deep copy of color
+    }
 }
 
 Sphere& Sphere::operator=(const Sphere& sphere) {
@@ -32,6 +37,7 @@ Sphere& Sphere::operator=(const Sphere& sphere) {
         center = sphere.center ? std::make_unique<Vector3D>(*sphere.center) : nullptr;
         radius = sphere.radius ? std::make_unique<float>(*sphere.radius) : nullptr;
         color = sphere.color ? std::make_unique<sf::Color>(*sphere.color) : nullptr;
+        specular = sphere.specular ? std::make_unique<float>(*sphere.specular) : nullptr;
     }
     return *this;
 }
@@ -41,6 +47,23 @@ Sphere& Sphere::operator=(Sphere&& sphere) {
         center = std::move(sphere.center);
         radius = std::move(sphere.radius);
         color = std::move(sphere.color);
+        specular = std::move(sphere.specular);
     }
     return *this;
+}
+
+Vector3D* Sphere::GetCenter() const {
+    return this->center.get();
+}
+
+float Sphere::GetRadius() const {
+    return *this->radius;
+}
+
+sf::Color& Sphere::GetColor() const {
+    return *this->color;
+}
+
+float Sphere::GetSpecular() const {
+    return *this->specular;
 }
