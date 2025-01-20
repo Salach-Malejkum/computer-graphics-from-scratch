@@ -14,8 +14,18 @@ The results of the implementation can be found on below picture
 Project is on branch `chapter2`
 The project evolved into more complex project with a the following build command:
 ```
-g++ -o main.exe main.cpp src/sphere/sphere.cpp src/light/light.cpp -I include -I C:/SFML/include -L C:/SFML/lib -lsfml-graphics -lsfml-window -lsfml-syste
+g++ -o main.exe main.cpp src/sphere/sphere.cpp src/light/light.cpp -I include -I C:/SFML/include -L C:/SFML/lib -lsfml-graphics -lsfml-window -lsfml-system
 ```
 
 The results of light & reflection implementation are shown below
 ![RGB Circles with reflections](images/cg_ch2.png "RGB Circles with reflections")
+
+## Chapter 3
+Project is on branch `chapter3`
+The project uses the same build function like `chapter2`:
+```
+g++ -o main.exe main.cpp src/sphere/sphere.cpp src/light/light.cpp -I include -I C:/SFML/include -L C:/SFML/lib -lsfml-graphics -lsfml-window -lsfml-system
+```
+
+The results of the shadows & sphere reflection are shown below with reflection depth = 3
+![RGB Circles with shadows](images/cg_ch3.png "RGB Circles with shadows")
