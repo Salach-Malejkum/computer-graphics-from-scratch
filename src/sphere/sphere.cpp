@@ -5,13 +5,15 @@ Sphere::Sphere() {
     radius = std::make_unique<float>(0);
     color = std::make_unique<sf::Color>(sf::Color::White);
     specular = std::make_unique<float>(-1);
+    reflective = std::make_unique<float>(0);
 }
 
-Sphere::Sphere(const Vector3D& center, float radius, const sf::Color& color, float specular) {
+Sphere::Sphere(const Vector3D& center, float radius, const sf::Color& color, float specular, float reflective) {
     this->center = std::make_unique<Vector3D>(center);
     this->radius = std::make_unique<float>(radius);
     this->color = std::make_unique<sf::Color>(color);
     this->specular = std::make_unique<float>(specular);
+    this->reflective = std::make_unique<float>(reflective);
 }
 
 Sphere::~Sphere() {}
@@ -27,7 +29,10 @@ Sphere::Sphere(const Sphere& sphere) {
         color = std::make_unique<sf::Color>(*sphere.color);  // Deep copy of color
     }
     if (sphere.specular) {
-        specular = std::make_unique<float>(*sphere.specular);  // Deep copy of color
+        specular = std::make_unique<float>(*sphere.specular);  // Deep copy of specular
+    }
+    if (sphere.reflective) {
+        reflective = std::make_unique<float>(*sphere.reflective);  // Deep copy of reflective
     }
 }
 
@@ -38,6 +43,7 @@ Sphere& Sphere::operator=(const Sphere& sphere) {
         radius = sphere.radius ? std::make_unique<float>(*sphere.radius) : nullptr;
         color = sphere.color ? std::make_unique<sf::Color>(*sphere.color) : nullptr;
         specular = sphere.specular ? std::make_unique<float>(*sphere.specular) : nullptr;
+        reflective = sphere.reflective ? std::make_unique<float>(*sphere.reflective) : nullptr;
     }
     return *this;
 }
@@ -48,6 +54,7 @@ Sphere& Sphere::operator=(Sphere&& sphere) {
         radius = std::move(sphere.radius);
         color = std::move(sphere.color);
         specular = std::move(sphere.specular);
+        reflective = std::move(sphere.reflective);
     }
     return *this;
 }
@@ -66,4 +73,8 @@ sf::Color& Sphere::GetColor() const {
 
 float Sphere::GetSpecular() const {
     return *this->specular;
+}
+
+float Sphere::GetReflective() const {
+    return *this->reflective;
 }

@@ -32,8 +32,43 @@ bool IntersectRaySphere(Vector3D origin, Vector3D direction, Sphere sphere, floa
 }
 
 
-float ComputeLighting(const std::vector<std::unique_ptr<ILight>>& lights, Vector3D point, Vector3D normal, Vector3D view, float specular) {
+Vector3D ReflectRay(Vector3D ray, Vector3D normal) {
+    return normal * 2 * Vector3D::dot_product(normal, ray) - ray;
+}
+
+
+void ClosestIntersection(
+    const std::vector<std::unique_ptr<ILight>>& lights,
+    const std::vector<Sphere>& spheres,
+    Vector3D origin, Vector3D direction,
+    float t_min, float t_max,
+    float& closest_t, std::unique_ptr<Sphere>& closest_sphere) {
+
+    if (t_max < 0) {
+        return;
+    }
+
+    for (const Sphere& sphere : spheres) {
+        float t0, t1;
+        
+        if (IntersectRaySphere(origin, direction, sphere, t0, t1))
+        {
+            if (t0 >= t_min && t0 <= t_max && t0 < closest_t) {
+                closest_t = t0;
+                closest_sphere = std::make_unique<Sphere>(sphere);
+            }
+            if (t1 >= t_min && t1 <= t_max && t1 < closest_t) {
+                closest_t = t1;
+                closest_sphere = std::make_unique<Sphere>(sphere);
+            }
+        }
+    }
+}
+
+
+float ComputeLighting(const std::vector<std::unique_ptr<ILight>>& lights, const std::vector<Sphere>& spheres, Vector3D point, Vector3D normal, Vector3D view, float specular) {
     float intensity = 0.0;
+    float t_max = -1;
 
     for (const auto& light : lights) {
         if (light->GetLightType() == LightType::AMBIENT) {
@@ -44,8 +79,19 @@ float ComputeLighting(const std::vector<std::unique_ptr<ILight>>& lights, Vector
             if (light->GetLightType() == LightType::POINT) {
                 Vector3D light_pos = dynamic_cast<PointLight*>(light.get())->GetPosition();
                 lightVect = light_pos - point;
+                t_max = 1;
             } else {
                 lightVect = dynamic_cast<DirectionalLight*>(light.get())->GetDirection();
+                t_max = INFINITY;
+            }
+
+            // shadow check
+            float shadow_t = INFINITY;
+            std::unique_ptr<Sphere> shadow_sphere = nullptr;
+            ClosestIntersection(lights, spheres, point, lightVect, 0.001, t_max, shadow_t, shadow_sphere);
+
+            if (shadow_sphere != NULL) {
+                continue;
             }
 
             // difuse light
@@ -56,7 +102,7 @@ float ComputeLighting(const std::vector<std::unique_ptr<ILight>>& lights, Vector
 
             // specular light
             if (specular != -1) {
-                Vector3D reflection = normal * 2  * n_dot_l - lightVect;
+                Vector3D reflection = ReflectRay(lightVect, normal);
                 float r_dot_v = Vector3D::dot_product(reflection, view);
 
                 if (r_dot_v > 0) {
@@ -65,49 +111,48 @@ float ComputeLighting(const std::vector<std::unique_ptr<ILight>>& lights, Vector
             }
         }
     }
-    return intensity;
+    return std::max(0.0f, std::min(1.0f, intensity));
 }
+
 
 sf::Color TraceRay(
     const std::vector<std::unique_ptr<ILight>>& lights,
     const std::vector<Sphere>& spheres,
-    Vector3D origin, Vector3D direction,
-    float tMin, float tMax
+    Vector3D origin,
+    Vector3D direction,
+    float t_min, 
+    float t_max, 
+    int rec_depth
     ) {
-    float closest_t = INFINITY;
-    const Sphere* closest_sphere = nullptr;
 
-    for (const Sphere& sphere : spheres) {
-        float t0, t1;
-        
-        if (IntersectRaySphere(origin, direction, sphere, t0, t1))
-        {
-            if (t0 >= tMin && t0 <= tMax && t0 < closest_t) {
-                closest_t = t0;
-                closest_sphere = &sphere;
-            }
-            if (t1 >= tMin && t1 <= tMax && t1 < closest_t) {
-                closest_t = t1;
-                closest_sphere = &sphere;
-            }
-        }
-    }
+    float closest_t = INFINITY;
+    std::unique_ptr<Sphere> closest_sphere = nullptr;
+    ClosestIntersection(lights, spheres, origin, direction, t_min, t_max, closest_t, closest_sphere);
 
     if (closest_sphere == NULL) {
-        return sf::Color::White;
+        return sf::Color::Black;
     }
 
     Vector3D point = origin + direction * closest_t;
     Vector3D normal = point - *dynamic_cast<Vector3D*>(closest_sphere->GetCenter());
     normal = normal / normal.Length();
-    return multiplyColorByIntensity(closest_sphere->GetColor(), ComputeLighting(lights, point, normal, -direction, closest_sphere->GetSpecular()));
+    sf::Color localColor = multiplyColorByIntensity(closest_sphere->GetColor(), ComputeLighting(lights, spheres, point, normal, -direction, closest_sphere->GetSpecular()));
+    
+    float reflective = closest_sphere->GetReflective();
+    if (rec_depth <= 0 || reflective <= 0) {
+        return localColor;
+    }
+
+    Vector3D ray = ReflectRay(-direction, normal);
+    sf::Color reflected_color = TraceRay(lights, spheres, point + normal * 0.001f, -ray, 0.001, INFINITY, rec_depth - 1);
+    return multiplyColorByIntensity(localColor, (1 - reflective)) + multiplyColorByIntensity(reflected_color, reflective);
 }
 
 void CreateSpheres(std::vector<Sphere>& spheres) {
-    spheres.push_back(Sphere(Vector3D{0, 1, 3}, 1, sf::Color::Red, 500)); // red
-    spheres.push_back(Sphere(Vector3D{2, 0, 4}, 1, sf::Color::Blue, 500)); // blue
-    spheres.push_back(Sphere(Vector3D{-2, 0, 4}, 1, sf::Color::Green, 10)); // green
-    spheres.push_back(Sphere(Vector3D{0, 5001, 0}, 5000, sf::Color::Yellow, 5000)); //yellow
+    spheres.push_back(Sphere(Vector3D{0, 1, 3}, 1, sf::Color::Red, 500, 0.2)); // red
+    spheres.push_back(Sphere(Vector3D{2, 0, 4}, 1, sf::Color::Blue, 500, 0.3)); // blue
+    spheres.push_back(Sphere(Vector3D{-2, 0, 4}, 1, sf::Color::Green, 10, 0.4)); // green
+    spheres.push_back(Sphere(Vector3D{0, 5001, 0}, 5000, sf::Color::Yellow, 1000, 0.5)); //yellow
 }
 
 void CreateLights(std::vector<std::unique_ptr<ILight>>& lights) {
@@ -130,13 +175,15 @@ int main()
     sf::Image canvas;
     sf::Vector2u canvas_size(C_WIDTH, C_HEIGHT);
     canvas.resize(canvas_size, sf::Color::White);
+    int rec_depth = 3;
 
     for (int x = -C_WIDTH / 2; x < C_WIDTH / 2; x++) // 
     {
         for (int y = -C_HEIGHT / 2; y < C_HEIGHT / 2; y++) // 
         {
+            
             Vector3D direction = CanvasToViewport(x, y);
-            sf::Color color = TraceRay(lights, spheres, origin, direction, 1, INFINITY);
+            sf::Color color = TraceRay(lights, spheres, origin, direction, 1, INFINITY, rec_depth);
             sf::Vector2u pixel_pos(x + C_WIDTH / 2, y + C_HEIGHT / 2);
             canvas.setPixel(pixel_pos, color);
         }

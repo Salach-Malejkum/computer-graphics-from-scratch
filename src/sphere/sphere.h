@@ -13,9 +13,10 @@ class Sphere {
         std::unique_ptr<float> radius;
         std::unique_ptr<sf::Color> color;
         std::unique_ptr<float> specular;
+        std::unique_ptr<float> reflective;
     public:
         Sphere();
-        Sphere(const Vector3D& center, float radius, const sf::Color& color, float specular);
+        Sphere(const Vector3D& center, float radius, const sf::Color& color, float specular, float reflective);
         ~Sphere();
         Sphere(const Sphere &sphere);
         Sphere& operator=(const Sphere &sphere);
@@ -25,4 +26,5 @@ class Sphere {
         float GetRadius() const;
         sf::Color& GetColor() const;
         float GetSpecular() const;
+        float GetReflective() const;
 };
