@@ -5,9 +5,11 @@
 
 #include "src/sphere/sphere.h"
 #include "src/light/light.h"
+// #include "src/cache/cache.h"
 
 
 const int C_WIDTH = 600, C_HEIGHT = 600, V_WIDTH = 1, V_HEIGHT = 1, d = 1;
+// IntersectionCache intersectionCache;
 
 Vector3D CanvasToViewport(float x, float y) {
     Vector3D viewport{x * V_WIDTH / C_WIDTH, y * V_HEIGHT / C_HEIGHT, d};
@@ -15,8 +17,13 @@ Vector3D CanvasToViewport(float x, float y) {
 }
 
 bool IntersectRaySphere(Vector3D origin, Vector3D direction, Sphere sphere, float &t0, float &t1) {
+    // if (intersectionCache.get(origin, direction, sphere, t0, t1)) {
+    //     return true;
+    // }
+
+
     int r = sphere.GetRadius();
-    Vector3D oc = origin - *dynamic_cast<Vector3D*>(sphere.GetCenter());
+    Vector3D oc = origin - sphere.GetCenter();
 
 
     float a = Vector3D::dot_product(direction, direction);
@@ -32,6 +39,9 @@ bool IntersectRaySphere(Vector3D origin, Vector3D direction, Sphere sphere, floa
 
     t0 = (-b + sqrt(discriminant)) / (2 * a);
     t1 = (-b - sqrt(discriminant)) / (2 * a);
+
+    // intersectionCache.put(origin, direction, sphere, t0, t1);
+
     return true;
 }
 
@@ -46,7 +56,7 @@ void ClosestIntersection(
     const std::vector<Sphere>& spheres,
     Vector3D origin, Vector3D direction,
     float t_min, float t_max,
-    float& closest_t, std::unique_ptr<Sphere>& closest_sphere) {
+    float& closest_t, std::shared_ptr<Sphere>& closest_sphere) {
 
     if (t_max < 0) {
         return;
@@ -59,11 +69,11 @@ void ClosestIntersection(
         {
             if (t0 >= t_min && t0 <= t_max && t0 < closest_t) {
                 closest_t = t0;
-                closest_sphere = std::make_unique<Sphere>(sphere);
+                closest_sphere = std::make_shared<Sphere>(sphere);
             }
             if (t1 >= t_min && t1 <= t_max && t1 < closest_t) {
                 closest_t = t1;
-                closest_sphere = std::make_unique<Sphere>(sphere);
+                closest_sphere = std::make_shared<Sphere>(sphere);
             }
         }
     }
@@ -91,7 +101,7 @@ float ComputeLighting(const std::vector<std::unique_ptr<ILight>>& lights, const 
 
             // shadow check
             float shadow_t = INFINITY;
-            std::unique_ptr<Sphere> shadow_sphere = nullptr;
+            std::shared_ptr<Sphere> shadow_sphere = nullptr;
             ClosestIntersection(lights, spheres, point, lightVect, 0.001, t_max, shadow_t, shadow_sphere);
 
             if (shadow_sphere != NULL) {
@@ -130,7 +140,7 @@ sf::Color TraceRay(
     ) {
 
     float closest_t = INFINITY;
-    std::unique_ptr<Sphere> closest_sphere = nullptr;
+    std::shared_ptr<Sphere> closest_sphere = nullptr;
     ClosestIntersection(lights, spheres, origin, direction, t_min, t_max, closest_t, closest_sphere);
 
     if (closest_sphere == NULL) {
@@ -138,7 +148,7 @@ sf::Color TraceRay(
     }
 
     Vector3D point = origin + direction * closest_t;
-    Vector3D normal = point - *dynamic_cast<Vector3D*>(closest_sphere->GetCenter());
+    Vector3D normal = point - closest_sphere->GetCenter();
     normal = normal / normal.Length();
     sf::Color localColor = multiplyColorByIntensity(closest_sphere->GetColor(), ComputeLighting(lights, spheres, point, normal, -direction, closest_sphere->GetSpecular()));
     

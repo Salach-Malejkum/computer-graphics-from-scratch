@@ -3,28 +3,29 @@
 #include <cstdint>
 #include <memory>
 #include <SFML/Graphics.hpp>
-#include "../utils.h"
+#include "../utils/utils.h"
 
 
 
 class Sphere {
     private:
-        std::unique_ptr<Vector3D> center;
-        std::unique_ptr<float> radius;
-        std::unique_ptr<sf::Color> color;
-        std::unique_ptr<float> specular;
-        std::unique_ptr<float> reflective;
+        std::shared_ptr<Vector3D> center;
+        float radius;
+        std::shared_ptr<sf::Color> color;
+        float specular;
+        float reflective;
     public:
         Sphere();
         Sphere(const Vector3D& center, float radius, const sf::Color& color, float specular, float reflective);
-        ~Sphere();
+        ~Sphere() = default;
         Sphere(const Sphere &sphere);
         Sphere& operator=(const Sphere &sphere);
         Sphere& operator=(Sphere&& sphere);
+        bool operator==(const Sphere& other) const;
 
-        Vector3D* GetCenter() const;
+        Vector3D GetCenter() const;
         float GetRadius() const;
-        sf::Color& GetColor() const;
+        sf::Color GetColor() const;
         float GetSpecular() const;
         float GetReflective() const;
 };
