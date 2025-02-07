@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../utils/utils.h"
+#include "../vector3d/vector3d.h"
 
 enum LightType {
     AMBIENT,
